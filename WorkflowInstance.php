@@ -252,8 +252,7 @@ class WorkflowInstance extends InstanceController
                 if (InstanceController::create()) {
                     var_dump("all done");
                     return true;
-                }
-                else
+                } else
                     return false;
             } else
                 return false;
@@ -341,7 +340,7 @@ class WorkflowInstance extends InstanceController
     {
         try {
             var_dump("going to the next step");
-            $updatedAt = date('Y-m-d H:i:s'); 
+            $updatedAt = date('Y-m-d H:i:s');
             $next_step = $this->instance_status + 1;
             var_dump("Next step count ", $next_step);
             $total_steps = $this->workflow_obj->step_count($this->workflow_id);
@@ -457,44 +456,70 @@ class WorkflowInstance extends InstanceController
         InstanceController::set_status($this->status_code);
     }
 
+    /**
+     * Update the intance by new status code alone with the ack from the handler
+     */
     public function update_instance()
     {
-        var_dump("Current status code: ", $this->status_code);
-        if ($this->status_code == 1) {
-            if ($this->go_next_step()) {
-                $this->handle_instance($this->instance_id);
-            } else {
-                var_dump("not going for next step");
-                return false;
+        try {
+            var_dump("Current status code: ", $this->status_code);
+            if ($this->status_code == 1) {
+                if ($this->go_next_step()) {
+                    $this->handle_instance($this->instance_id);
+                } else {
+                    var_dump("not going for next step");
+                    return false;
+                }
             }
-        }
 
-        if ($this->status_code == -2) {
-            $this->go_previous_step();
+            if ($this->status_code == -2) {
+                $this->go_previous_step();
+            }
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
         }
     }
 
+    /**
+     * Getting the status code name by providing the status number
+     */
     private function get_status_name($status)
     {
-        $query = "
+        try {
+            $query = "
                 SELECT * FROM " . $this->status_code_table . " WHERE status_name = :status_name;
             ";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam("status_name", $status);
-        $stmt->execute();
-        if ($stmt->rowCount() == 1) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $row['status_code'];
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam("status_name", $status);
+            $stmt->execute();
+            if ($stmt->rowCount() == 1) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                return $row['status_code'];
+            }
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
         }
     }
 
     public function set_acknowledgement($ack)
     {
-        InstanceController::set_acknowledgement($ack);
+        try {
+            InstanceController::set_acknowledgement($ack);
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
     }
 
     public function update_status()
     {
-        InstanceController::update();
+        try {
+            InstanceController::update();
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
     }
 }
