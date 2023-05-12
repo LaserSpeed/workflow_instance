@@ -16,6 +16,7 @@ class InstanceController
     private $is_group = false;
     private $acknowledgement;
     private $status;
+    private $trace_order;
     private $created_at;
     private $updated_at;
 
@@ -60,7 +61,7 @@ class InstanceController
         $this->status = '0';
     }
 
-    public function set_values($instance_id, $handleby_id, $group = false, $status = 0)
+    public function set_values($instance_id, $handleby_id, $trace_order, $group = false, $status = 0)
     {
         $this->instance_id = $instance_id;
         if ($group == false) {
@@ -69,6 +70,7 @@ class InstanceController
             $this->group_id = $handleby_id;
             $this->is_group = true;
         }
+        $this->trace_order = $trace_order;
         $this->status = $status;
 
         var_dump("after setting the values");
@@ -94,20 +96,21 @@ class InstanceController
             if ($this->is_group) {
                 var_dump("group id available so we are here");
                 $query = "
-                INSERT INTO " . $this->trace_table_group . " SET instance_id = :instance_id, group_id = :group_id
+                INSERT INTO " . $this->trace_table_group . " SET instance_id = :instance_id, group_id = :group_id, trace_order = :trace_order
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam('group_id', $this->group_id);
             } else {
                 var_dump("group id not available so we are here");
                 $query = "
-                    INSERT INTO " . $this->trace_table . " SET instance_id = :instance_id, step_handleby = :step_handleby
+                    INSERT INTO " . $this->trace_table . " SET instance_id = :instance_id, step_handleby = :step_handleby, trace_order = :trace_order
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam('step_handleby', $this->step_handleby_id);
             }
 
             $stmt->bindParam('instance_id', $this->instance_id);
+            $stmt->bindParam('trace_order', $this->trace_order);
             // $stmt->bindParam('status', $this->status);
             if ($stmt->execute()) {
                 var_dump("completed");
@@ -212,15 +215,15 @@ class InstanceController
             if (is_null($this->group_id)) {
                 var_dump("Group id not available so we are here");
                 $query = "
-                        UPDATE " . $this->trace_table . " SET status = :status, acknowledgement = :acknowledgement, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
-                    ";
+                    UPDATE " . $this->trace_table . " SET status = :status, acknowledgement = :acknowledgement, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
+                ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
             } else {
                 var_dump("Group id available so we are here");
                 $query = "
-                        UPDATE " . $this->trace_table_group . " SET status = :status, acknowledgement = :acknowledgement, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
-                    ";
+                    UPDATE " . $this->trace_table_group . " SET status = :status, acknowledgement = :acknowledgement, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
+                ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
                 $stmt->bindParam("handled_by", $this->step_handleby_id);
