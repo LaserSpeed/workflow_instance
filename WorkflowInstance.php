@@ -24,6 +24,7 @@ class WorkflowInstance extends InstanceController
     private $instance_file;
     private $instance_status;
     private $status_code;
+    private $trace_order = 1;
 
     private $step_obj;
     private $workflow_obj;
@@ -246,7 +247,7 @@ class WorkflowInstance extends InstanceController
                 var_dump("is this a group ", $is_group);
 
                 // set the values
-                InstanceController::set_values($this->instance_id, $handler_id, $is_group);
+                InstanceController::set_values($this->instance_id, $handler_id, $this->trace_order, $is_group);
 
                 // create the new instance controller record
                 if (InstanceController::create()) {
@@ -284,7 +285,8 @@ class WorkflowInstance extends InstanceController
                         $this->instance_name = $row['instance_name'];
                         $this->instance_description = $row['instance_description'];
                         $this->instance_status = $row['instance_status'];
-
+                        $this->trace_order = $row['instance_status'] + 1;
+                        var_dump("Trace order : ", $this->trace_order);
                         var_dump("loading the instance complete");
                     }
                 } else {
@@ -462,6 +464,11 @@ class WorkflowInstance extends InstanceController
     public function update_instance()
     {
         try {
+            // var_dump("is accept check before update instance ", InstanceController::is_accepted());
+            // if (InstanceController::is_accepted())
+            //     return false;
+            // else {
+            // }
             var_dump("Current status code: ", $this->status_code);
             if ($this->status_code == 1) {
                 if ($this->go_next_step()) {
@@ -516,7 +523,13 @@ class WorkflowInstance extends InstanceController
     public function update_status()
     {
         try {
-            InstanceController::update();
+            var_dump("is accept check before update ", InstanceController::is_accepted());
+            if (InstanceController::is_accepted())
+                return false;
+            else
+                if (InstanceController::update()) {
+                    $this->update_instance();
+                }
         } catch (PDOException $e) {
             echo json_encode($e);
             return false;

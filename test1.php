@@ -35,13 +35,13 @@
     /**
      * Update the status of the instance
     */
-    $obj->load_instance(69);
-    // $obj->set_group_id(123123);
-    $obj->set_employee_id(123321);
+    $obj->load_instance(71);
+    $obj->set_group_id(123123);
+    $obj->set_employee_id(120023);
     $obj->set_status("accept");
-    $obj->set_acknowledgement("Accept");
+    $obj->set_acknowledgement("Accept and forward");
     $obj->update_status();
-    $obj->update_instance();
+    // $obj->update_instance();
 
     // modify new status
 
