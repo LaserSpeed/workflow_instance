@@ -178,16 +178,24 @@ class InstanceController
         echo $output;
     }
 
+    /**
+     * Get the status code by providing the staus number
+     */
     private function get_status_code()
     {
-        $query = "
-        SELECT status_name FROM " . $this->status_code_table . " WHERE status_code = :status_code
-        ";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam("status_code", $this->status);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row['status_name'];
+        try {
+            $query = "
+            SELECT status_name FROM " . $this->status_code_table . " WHERE status_code = :status_code
+            ";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam("status_code", $this->status);
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row['status_name'];
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
     }
 
 
@@ -196,64 +204,78 @@ class InstanceController
      */
     public function update()
     {
+        try {
+            var_dump("updating the status");
+            $updatedAt = date('Y-m-d H:i:s');
 
-        var_dump("updating the status");
-        $updatedAt = date('Y-m-d H:i:s');
+            var_dump("is group id available: ", $this->group_id);
+            if (is_null($this->group_id)) {
+                var_dump("Group id not available so we are here");
+                $query = "
+                        UPDATE " . $this->trace_table . " SET status = :status, acknowledgement = :acknowledgement, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
+                    ";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam("step_handleby", $this->step_handleby_id);
+            } else {
+                var_dump("Group id available so we are here");
+                $query = "
+                        UPDATE " . $this->trace_table_group . " SET status = :status, acknowledgement = :acknowledgement, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
+                    ";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam("group_id", $this->group_id);
+                $stmt->bindParam("handled_by", $this->step_handleby_id);
+            }
 
-        var_dump("is group id available: ", $this->group_id);
-        if (is_null($this->group_id)) {
-            var_dump("Group id not available so we are here");
-            $query = "
-                    UPDATE " . $this->trace_table . " SET status = :status, acknowledgement = :acknowledgement, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
-                ";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam("step_handleby", $this->step_handleby_id);
-        } else {
-            var_dump("Group id available so we are here");
-            $query = "
-                    UPDATE " . $this->trace_table_group . " SET status = :status, acknowledgement = :acknowledgement, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
-                ";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam("group_id", $this->group_id);
-            $stmt->bindParam("handled_by", $this->step_handleby_id);
-        }
+            $stmt->bindParam("instance_id", $this->instance_id);
+            $stmt->bindParam("acknowledgement", $this->acknowledgement);
+            $stmt->bindParam("status", $this->status);
+            $stmt->bindParam("updated_at", $updatedAt);
 
-        $stmt->bindParam("instance_id", $this->instance_id);
-        $stmt->bindParam("acknowledgement", $this->acknowledgement);
-        $stmt->bindParam("status", $this->status);
-        $stmt->bindParam("updated_at", $updatedAt);
-
-        if ($stmt->execute()) {
-            var_dump("updated instance");
-            return true;
-        } else
+            if ($stmt->execute()) {
+                var_dump("updated instance");
+                return true;
+            } else
+                return false;
+        } catch (PDOException $e) {
+            echo json_encode($e);
             return false;
+        }
     }
 
-    public function is_updated()
+    /**
+     * This function will call to check whether a step is already accepted or not
+     * If accepted already it can not revert but if not then it can be modify  
+     */
+    public function is_accepted()
     {
-        if (is_null($this->group_id)) {
-            $query = "
-                SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby 
-            ";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam("step_handleby", $this->step_handleby_id);
-        } else {
-            $query = "
+        try {
+            var_dump("is group in is accepted ", $this->is_group);
+            if (($this->is_group) and isset($this->group_id)) {
+                $query = "
                 SELECT status from " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id 
-            ";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam("group_id", $this->group_id);
-        }
-        $stmt->bindParam("instance_id", $this->instance_id);
-        $stmt->execute();
-        if ($stmt->rowCount() == 1) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row['status'] == 0)
+                ";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam("group_id", $this->group_id);
+            } else {
+                $query = "
+                    SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby 
+                ";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam("step_handleby", $this->step_handleby_id);
+            }
+            $stmt->bindParam("instance_id", $this->instance_id);
+            $stmt->execute();
+            if ($stmt->rowCount() == 1) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($row['status'] == 1)
+                    return true;
+                else
+                    return false;
+            } else {
                 return false;
-            else
-                return true;
-        } else {
+            }
+        } catch (PDOException $e) {
+            echo json_encode($e);
             return false;
         }
     }

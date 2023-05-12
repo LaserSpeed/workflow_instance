@@ -625,5 +625,3 @@ class Step
         return $status;
     }
 }
-$obj = new step();
-$obj->is_group();
