@@ -253,15 +253,17 @@ class InstanceController
     {
         try {
             var_dump("is group in is accepted ", $this->is_group);
-            if (($this->is_group) and isset($this->group_id)) {
+            if (($this->is_group) OR isset($this->group_id)) {
+                var_dump("Fetching from group table");
                 $query = "
                 SELECT status from " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id 
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
             } else {
+                var_dump("Fetching from person table table");
                 $query = "
-                    SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby 
+                SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby 
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
