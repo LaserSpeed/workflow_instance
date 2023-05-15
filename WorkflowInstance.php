@@ -29,6 +29,24 @@ class WorkflowInstance extends InstanceController
     private $step_obj;
     private $workflow_obj;
 
+    public function __construct()
+    {
+        $this->conn = connect_db();
+
+        // calling the constructor of InstanceController
+        parent::__construct();
+
+        $data = json_decode(file_get_contents(__DIR__ . '/config.json'), TRUE);
+        $this->instance_table = $data['instance_table'];
+        $this->workflow_table = $data['workflow_table'];
+        $this->employee_table = $data['employee_table'];
+        $this->step_table = $data['step_table'];
+        $this->status_code_table = $data['status_code'];
+
+        $this->step_obj = new Step();
+        $this->workflow_obj = new Workflow();
+    }
+
     public function set_employee_id($employee_id)
     {
         var_dump("setting the set handleby id");
@@ -52,24 +70,6 @@ class WorkflowInstance extends InstanceController
     public function get_group_id()
     {
         return $this->group_id;
-    }
-
-    public function __construct()
-    {
-        $this->conn = connect_db();
-
-        // calling the constructor of InstanceController
-        parent::__construct();
-
-        $data = json_decode(file_get_contents(__DIR__ . '/config.json'), TRUE);
-        $this->instance_table = $data['instance_table'];
-        $this->workflow_table = $data['workflow_table'];
-        $this->employee_table = $data['employee_table'];
-        $this->step_table = $data['step_table'];
-        $this->status_code_table = $data['status_code'];
-
-        $this->step_obj = new Step();
-        $this->workflow_obj = new Workflow();
     }
 
     /**
@@ -151,6 +151,16 @@ class WorkflowInstance extends InstanceController
         $this->instance_status = htmlspecialchars(strip_tags($status));
     }
 
+    public function set_acknowledgement($ack)
+    {
+        try {
+            InstanceController::set_acknowledgement($ack);
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
+    }
+
     /**
      * Creating a new instance
      */
@@ -173,7 +183,7 @@ class WorkflowInstance extends InstanceController
             if ($stmt->execute()) {
                 $last_id = $this->conn->lastInsertId();
                 $this->handle_instance($last_id);
-                $this->load($last_id);
+                $this->load_instance($last_id);
                 return true;
             } else
                 return false;
@@ -183,40 +193,12 @@ class WorkflowInstance extends InstanceController
         }
     }
 
-    public function load($instance_id)
-    {
-        try {
-            $query = "
-            SELECT * FROM " . $this->instance_table . " WHERE instance_id = :instance_id;
-            ";
-
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam('instance_id', $instance_id);
-            $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->instance_name = $row['instance_name'];
-            $this->instance_description = $row['instance_description'];
-            $this->instance_status = $row['instance_status'];
-            $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
-        } catch (PDOException $e) {
-            echo json_encode($e);
-            return false;
-        }
-    }
-
-    public function show()
-    {
-        $output = "\nInstance name: " . $this->instance_name . "\nDescription: " . $this->instance_description . "\nWorkflow: " . $this->workflow_name . "\nStatus: " . $this->instance_status . "";
-        echo $output;
-    }
-
-
     /**
      * This function will create an instance controller 
      * According to the instance controller a person or a group can view a particular intance
      * which is only related to the person or the group 
      */
-    public function handle_instance($instance_id)
+    private function handle_instance($instance_id)
     {
         try {
             var_dump("Creating new instance controller");
@@ -264,6 +246,38 @@ class WorkflowInstance extends InstanceController
     }
 
     /**
+     * Load the instance details 
+     */
+    // public function load($instance_id)
+    // {
+    //     try {
+    //         $query = "
+    //         SELECT * FROM " . $this->instance_table . " WHERE instance_id = :instance_id;
+    //         ";
+
+    //         $stmt = $this->conn->prepare($query);
+    //         $stmt->bindParam('instance_id', $instance_id);
+
+    //         if($stmt->execute()) {
+    //             $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    //             $this->instance_name = $row['instance_name'];
+    //             $this->instance_description = $row['instance_description'];
+    //             $this->instance_status = $row['instance_status'];
+    //             $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
+    //         }
+    //     } catch (PDOException $e) {
+    //         echo json_encode($e);
+    //         return false;
+    //     }
+    // }
+
+    public function show()
+    {
+        $output = "\nInstance name: " . $this->instance_name . "\nDescription: " . $this->instance_description . "\nWorkflow: " . $this->workflow_name . "\nStatus: " . $this->instance_status . "";
+        echo $output;
+    }
+
+    /**
      * Load function to load the current status of an instance
      */
     public function load_instance($id)
@@ -286,6 +300,7 @@ class WorkflowInstance extends InstanceController
                         $this->instance_description = $row['instance_description'];
                         $this->instance_status = $row['instance_status'];
                         $this->trace_order = $row['instance_status'] + 1;
+                        $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
                         var_dump("Trace order : ", $this->trace_order);
                         var_dump("loading the instance complete");
                     }
@@ -457,18 +472,29 @@ class WorkflowInstance extends InstanceController
         var_dump("this is the status code: ", $this->status_code);
         InstanceController::set_status($this->status_code);
     }
-
+    
     /**
      * Update the intance by new status code alone with the ack from the handler
      */
-    public function update_instance()
+    public function update()
     {
         try {
-            // var_dump("is accept check before update instance ", InstanceController::is_accepted());
-            // if (InstanceController::is_accepted())
-            //     return false;
-            // else {
-            // }
+            var_dump("is accept check before update ", InstanceController::is_accepted());
+            if (InstanceController::is_accepted())
+                return false;
+            else
+                if (InstanceController::update()) {
+                    $this->update_instance();
+                }
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
+    }
+
+    private function update_instance()
+    {
+        try {
             var_dump("Current status code: ", $this->status_code);
             if ($this->status_code == 1) {
                 if ($this->go_next_step()) {
@@ -510,29 +536,7 @@ class WorkflowInstance extends InstanceController
         }
     }
 
-    public function set_acknowledgement($ack)
-    {
-        try {
-            InstanceController::set_acknowledgement($ack);
-        } catch (PDOException $e) {
-            echo json_encode($e);
-            return false;
-        }
-    }
+    
 
-    public function update_status()
-    {
-        try {
-            var_dump("is accept check before update ", InstanceController::is_accepted());
-            if (InstanceController::is_accepted())
-                return false;
-            else
-                if (InstanceController::update()) {
-                    $this->update_instance();
-                }
-        } catch (PDOException $e) {
-            echo json_encode($e);
-            return false;
-        }
-    }
+    
 }
