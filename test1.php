@@ -3,7 +3,7 @@
 
     $obj = new WorkflowInstance();
 
-    // $obj->set_workflow('Intern Logsheet');
+    // $obj->set_workflow('Intern logsheet');
     // $obj->set_user_by_name("Nitish rajbongshi");
     // // $obj->set_user_by_id(1);
 
@@ -33,7 +33,7 @@
     /**
      * Update the status of the instance
     */
-    $obj->load_instance(73);
+    $obj->load_instance(79);
     // $obj->set_group_id(123123);
     $obj->set_employee_id(123321);
     $obj->set_status("accept");
