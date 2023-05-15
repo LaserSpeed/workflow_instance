@@ -11,7 +11,7 @@
     // $obj->set_instance_values("Intern logsheet", "Intern logsheet approval request", 'pdf', "logsheet_2023.pdf");
     // $obj->create();
 
-    // $obj->load(56);
+    // $obj->load_instance(73);
     // $obj->show();
     
     // display the instance to a particular person 
@@ -25,24 +25,18 @@
      * Function to load and display the current status of the instance
      * 
      */
-    // $obj->load_instance(64);
+    // $obj->load_instance(73);
     // $obj->set_current_status();
     // $obj->display_status();
-    
-    // $obj->load_instance(18);
-    // $obj->go_particular_step(4);
+
     
     /**
      * Update the status of the instance
     */
-    $obj->load_instance(71);
-    $obj->set_group_id(123123);
-    $obj->set_employee_id(120023);
+    $obj->load_instance(73);
+    // $obj->set_group_id(123123);
+    $obj->set_employee_id(123321);
     $obj->set_status("accept");
     $obj->set_acknowledgement("Accept and forward");
-    $obj->update_status();
-    // $obj->update_instance();
-
-    // modify new status
-
+    $obj->update();
 ?>
