@@ -48,7 +48,6 @@ class WorkflowInstance extends InstanceController
 
     public function set_employee_id($employee_id)
     {
-        var_dump("setting the set handleby id");
         InstanceController::set_handleby_id($employee_id);
         $this->employee_id = $employee_id;
     }
@@ -60,10 +59,8 @@ class WorkflowInstance extends InstanceController
 
     public function set_group_id($group_id)
     {
-        var_dump("setting the group id");
         InstanceController::set_group_id($group_id);
         $this->group_id = $group_id;
-        var_dump("Group id: ", $this->group_id);
     }
 
     public function get_group_id()
@@ -77,13 +74,13 @@ class WorkflowInstance extends InstanceController
     public function set_user_by_name($employee_name)
     {
         $name = htmlspecialchars(strip_tags($employee_name));
-        $this->get_id_by_employee_name($name);
+        $this->get_id_by_name($name);
     }
 
     /**
      * Get the id of the employee by providing the name
      */
-    private function get_id_by_employee_name($employee_name)
+    private function get_id_by_name($employee_name)
     {
         try {
             $query = '
@@ -258,11 +255,11 @@ class WorkflowInstance extends InstanceController
     //     }
     // }
 
-    public function show_instance_details()
-    {
-        $output = "\nInstance name: " . $this->instance_name . "\nDescription: " . $this->instance_description . "\nWorkflow: " . $this->workflow_name . "\nStatus: " . $this->instance_status . "";
-        echo $output;
-    }
+    // public function show_instance_details()
+    // {
+    //     $output = "\nInstance name: " . $this->instance_name . "\nDescription: " . $this->instance_description . "\nWorkflow: " . $this->workflow_name . "\nStatus: " . $this->instance_status . "";
+    //     echo $output;
+    // }
 
     /**
      * Load function to load the current status of an instance
@@ -426,11 +423,11 @@ class WorkflowInstance extends InstanceController
     /**
      * Show instance to a perticular person
      */
-    public function show_instance_by_person()
+    public function show_single_instance()
     {
         try {
             $employee_id = $this->get_employee_id();
-            InstanceController::load_instance_by_person($employee_id);
+            InstanceController::load_single_instance($employee_id);
         } catch (PDOException $e) {
             echo json_encode($e);
             return false;
@@ -440,11 +437,11 @@ class WorkflowInstance extends InstanceController
     /**
      * Show instance to a perticular group
      */
-    public function show_instance_by_group()
+    public function show_group_instance()
     {
         try {
             $group_id = $this->get_group_id();
-            InstanceController::load_instance_by_group($group_id);
+            InstanceController::load_group_instance($group_id);
         } catch (PDOException $e) {
             echo json_encode($e);
             return false;
@@ -464,7 +461,6 @@ class WorkflowInstance extends InstanceController
     public function update()
     {
         try {
-            var_dump("Can the step update again ", InstanceController::can_update());
             if (InstanceController::can_update()) {
                 if (InstanceController::update())
                     $this->update_instance();
@@ -479,17 +475,6 @@ class WorkflowInstance extends InstanceController
     private function update_instance()
     {
         try {
-            // $query = "
-            //     SELECT * FROM " . $this->instance_table . " WHERE instance_id = :instance_id;
-            // ";
-            // $stmt = $this->conn->prepare($query);
-            // $stmt->bindParam("instance_id", $this->instance_id);
-            // $stmt->bindParam("instance_id", $this->instance_id);
-            // if ($stmt->execute()) {
-            //     if ($stmt->rowCount() == 1) {
-
-            //     }
-            // }
             var_dump("Check for status code: ", $this->status_code);
             if ($this->status_code == 1) {
                 if ($this->go_next_step())
@@ -498,9 +483,6 @@ class WorkflowInstance extends InstanceController
                     else
                         return false;
             }
-
-            if ($this->status_code == -1)
-                var_dump("Rejected and stay in the same step");
 
             if ($this->status_code == -2) {
                 if ($this->go_previous_step())
