@@ -23,6 +23,7 @@ class WorkflowInstance extends InstanceController
     private $instance_status;
     private $status_code;
     private $trace_order = 1;
+    private $step_number;
 
     private $step_obj;
     private $workflow_obj;
@@ -375,7 +376,7 @@ class WorkflowInstance extends InstanceController
         try {
             var_dump("Looking for the previous step");
             if ($this->instance_status > 1) {
-                $updatedAt = date('Y-m-d H:i:s'); 
+                $updatedAt = date('Y-m-d H:i:s');
                 $next_step = $this->instance_status - 1;
                 $query = "
                     UPDATE " . $this->instance_table . " SET instance_status = :status, updated_at = :updated_at WHERE instance_id = :instance_id
@@ -397,9 +398,11 @@ class WorkflowInstance extends InstanceController
     private function go_particular_step($step_number)
     {
         try {
+            var_dump("Going to a particular step.");
             $total_steps = $this->workflow_obj->step_count($this->workflow_id);
+            var_dump("Current instance status: ", $this->instance_status);
             $updatedAt = date('Y-m-d H:i:s');
-            if ($step_number >= 1 and $step_number <= $total_steps) {
+            if ($step_number >= 1 and $step_number <= $this->instance_status) {
                 $query = "
                     UPDATE " . $this->instance_table . " SET instance_status = :status, updated_at = :updated_at WHERE instance_id = :instance_id
                  ";
@@ -461,13 +464,12 @@ class WorkflowInstance extends InstanceController
     public function update()
     {
         try {
-            var_dump("Check for is it already accepted ", InstanceController::is_accepted());
-            if (InstanceController::is_accepted())
+            var_dump("Can the step update again ", InstanceController::can_update());
+            if (InstanceController::can_update()) {
+                if (InstanceController::update())
+                    $this->update_instance();
+            } else
                 return false;
-            else
-                if (InstanceController::update()) {
-                $this->update_instance();
-            }
         } catch (PDOException $e) {
             echo json_encode($e);
             return false;
@@ -477,25 +479,43 @@ class WorkflowInstance extends InstanceController
     private function update_instance()
     {
         try {
+            // $query = "
+            //     SELECT * FROM " . $this->instance_table . " WHERE instance_id = :instance_id;
+            // ";
+            // $stmt = $this->conn->prepare($query);
+            // $stmt->bindParam("instance_id", $this->instance_id);
+            // $stmt->bindParam("instance_id", $this->instance_id);
+            // if ($stmt->execute()) {
+            //     if ($stmt->rowCount() == 1) {
+
+            //     }
+            // }
             var_dump("Check for status code: ", $this->status_code);
             if ($this->status_code == 1) {
                 if ($this->go_next_step())
-                    $this->handle_instance($this->instance_id);
+                    if ($this->handle_instance($this->instance_id))
+                        return true;
+                    else
+                        return false;
             }
 
-            if ($this->status_code == -1) 
+            if ($this->status_code == -1)
                 var_dump("Rejected and stay in the same step");
 
             if ($this->status_code == -2) {
-                if($this->go_previous_step()) 
-                    if($this->handle_instance($this->instance_id))
+                if ($this->go_previous_step())
+                    if ($this->handle_instance($this->instance_id))
                         return true;
                     else
-                        return false;  
+                        return false;
             }
 
             if ($this->status_code == 2) {
-                $this->go_particular_step(1);
+                if ($this->go_particular_step($this->step_number))
+                    if ($this->handle_instance($this->instance_id))
+                        return true;
+                    else
+                        return false;
             }
         } catch (PDOException $e) {
             echo json_encode($e);
@@ -557,7 +577,9 @@ class WorkflowInstance extends InstanceController
      */
     public function goto($step_number)
     {
-        $this->status_code = $step_number;
+        $this->status_code = 2;
+        $this->step_number = $step_number;
+        InstanceController::set_step($step_number);
         InstanceController::set_status($this->status_code);
     }
 }

@@ -16,6 +16,7 @@ class InstanceController
     private $is_group = false;
     private $remarks;
     private $status;
+    private $step;
     private $trace_order;
     private $created_at;
     private $updated_at;
@@ -30,10 +31,14 @@ class InstanceController
         $this->group_id = $id;
     }
 
-    public function set_status($code)
+    protected function set_status($code)
     {
         $this->status = $code;
-        var_dump($this->status);
+    }
+
+    protected function set_step($step)
+    {
+        $this->step = $step;
     }
 
     protected function set_remarks($remarks)
@@ -208,15 +213,21 @@ class InstanceController
             if (is_null($this->group_id)) {
                 var_dump("Group id not found");
                 $query = "
-                    UPDATE " . $this->trace_table . " SET status = :status, remarks = :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
+                    UPDATE " . $this->trace_table . " SET `status`= :status, `remarks`= :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby );
                 ";
+                // $query = "
+                //     UPDATE " . $this->trace_table . " SET status = :status, remarks = :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
+                // ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
             } else {
                 var_dump("Group id found");
                 $query = "
-                    UPDATE " . $this->trace_table_group . " SET status = :status, remarks = :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
+                    UPDATE " . $this->trace_table_group . " SET `status`= :status, `remarks`= :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id );
                 ";
+                // $query = "
+                //     UPDATE " . $this->trace_table_group . " SET status = :status, remarks = :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
+                // ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
                 $stmt->bindParam("handled_by", $this->step_handleby_id);
@@ -228,8 +239,16 @@ class InstanceController
             $stmt->bindParam("updated_at", $updatedAt);
 
             if ($stmt->execute()) {
-                var_dump("Updated the instance controller");
-                return true;
+
+                var_dump("Updated number of row: ", $stmt->rowCount());
+                if($stmt->rowCount() == 1) {
+                    var_dump("Updated the instance controller");
+                    return true;
+                }
+
+                else 
+                    return false;
+
             } else
                 return false;
         } catch (PDOException $e) {
@@ -242,21 +261,21 @@ class InstanceController
      * This function will call to check whether a step is already accepted or not
      * If accepted already it can not revert but if not then it can be modify  
      */
-    public function is_accepted()
+    public function can_update()
     {
         try {
             var_dump("is group in is accepted ", $this->is_group);
-            if (($this->is_group) OR isset($this->group_id)) {
+            if (($this->is_group) or isset($this->group_id)) {
                 var_dump("Fetching from group table");
                 $query = "
-                SELECT status from " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id 
+                SELECT status from " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id )
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
             } else {
-                var_dump("Fetching from person table table");
+                var_dump("Fetching from person table");
                 $query = "
-                SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby 
+                SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby )
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
@@ -265,7 +284,7 @@ class InstanceController
             $stmt->execute();
             if ($stmt->rowCount() == 1) {
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($row['status'] == 1)
+                if (($row['status'] == 0) OR $row['status'] == -1)
                     return true;
                 else
                     return false;
