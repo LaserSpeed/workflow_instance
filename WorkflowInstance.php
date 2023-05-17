@@ -24,6 +24,8 @@ class WorkflowInstance extends InstanceController
     private $status_code;
     private $trace_order = 1;
     private $step_number;
+    private $created_at;
+    private $updated_at;
 
     private $step_obj;
     private $workflow_obj;
@@ -283,6 +285,8 @@ class WorkflowInstance extends InstanceController
                         $this->instance_name = $row['instance_name'];
                         $this->instance_description = $row['instance_description'];
                         $this->instance_status = $row['instance_status'];
+                        $this->created_at = $row['created_at'];
+                        $this->updated_at = $row['updated_at'];
                         $this->trace_order = $row['instance_status'] + 1;
                         $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
                         // var_dump("Trace order is: ", $this->trace_order);
@@ -297,6 +301,29 @@ class WorkflowInstance extends InstanceController
         } catch (PDOException $e) {
             echo json_encode($e);
         }
+    }
+
+    /**
+     * Set the instance value
+     */
+    public function show_instance() {
+        $output = "
+        Intance Details:\n
+        Instance Name     : ".$this->instance_name."
+        Instance Desc     : ".$this->instance_description."
+        Instance status   : ".$this->instance_status."
+        Created           : ".$this->created_at."
+        Last updated      : ".$this->updated_at."
+        ";
+        echo $output;
+    }
+
+    /**
+     * Function to show details of workflow and steps
+     */
+    public function show_workflow() {
+        $this->workflow_obj->load($this->workflow_name);
+        $this->workflow_obj->print();
     }
 
     /**

@@ -39,8 +39,8 @@ $obj = new Workflow();
  * 
  * Get all the details about the workflow and the steps for that workflow
  */
-// $obj->load('workflow1');
-// $obj->print();
+$obj->load('Intern logsheet');
+$obj->print();
 
 
 /**
