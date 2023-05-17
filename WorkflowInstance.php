@@ -20,8 +20,6 @@ class WorkflowInstance extends InstanceController
     private $workflow_name;
     private $instance_name;
     private $instance_description;
-    private $instance_type;
-    private $instance_file;
     private $instance_status;
     private $status_code;
     private $trace_order = 1;
@@ -81,11 +79,6 @@ class WorkflowInstance extends InstanceController
         $this->get_id_by_employee_name($name);
     }
 
-    public function set_user_by_id($employee_id)
-    {
-        $this->employee_id = $employee_id;
-    }
-
     /**
      * Get the id of the employee by providing the name
      */
@@ -142,19 +135,17 @@ class WorkflowInstance extends InstanceController
     /**
      * Set the values for an instance
      */
-    public function set_instance_values($name, $description, $type, $file, $status = 1)
+    public function set_instance_values($name, $description, $status = 1)
     {
         $this->instance_name = htmlspecialchars(strip_tags($name));
         $this->instance_description = htmlspecialchars(strip_tags($description));
-        $this->instance_type = htmlspecialchars(strip_tags($type));
-        $this->instance_file = htmlspecialchars(strip_tags($file));
         $this->instance_status = htmlspecialchars(strip_tags($status));
     }
 
-    public function set_acknowledgement($ack)
+    public function set_remarks($remarks)
     {
         try {
-            InstanceController::set_acknowledgement($ack);
+            InstanceController::set_remarks($remarks);
         } catch (PDOException $e) {
             echo json_encode($e);
             return false;
@@ -168,7 +159,7 @@ class WorkflowInstance extends InstanceController
     {
         try {
             $query = '
-                    INSERT INTO ' . $this->instance_table . ' SET `employee_id` = :employee_id, `workflow_id` = :workflow_id, `instance_name` = :name, `instance_description` = :description, `instance_type` = :type, `instance_file`=:file, `instance_status`=:status
+                    INSERT INTO ' . $this->instance_table . ' SET `employee_id` = :employee_id, `workflow_id` = :workflow_id, `instance_name` = :name, `instance_description` = :description, `instance_status`=:status
                 ';
             $stmt = $this->conn->prepare($query);
 
@@ -176,8 +167,6 @@ class WorkflowInstance extends InstanceController
             $stmt->bindParam('workflow_id', $this->workflow_id);
             $stmt->bindParam('name', $this->instance_name);
             $stmt->bindParam('description', $this->instance_description);
-            $stmt->bindParam('type', $this->instance_type);
-            $stmt->bindParam('file', $this->instance_file);
             $stmt->bindParam('status', $this->instance_status);
 
             if ($stmt->execute()) {
@@ -201,7 +190,7 @@ class WorkflowInstance extends InstanceController
     private function handle_instance($instance_id)
     {
         try {
-            var_dump("Creating new instance controller");
+            var_dump("Ready to create an instance handler");
             $query = "
             SELECT * FROM " . $this->instance_table . " WHERE instance_id = :instance_id;
             ";
@@ -211,29 +200,26 @@ class WorkflowInstance extends InstanceController
             if ($stmt->execute()) {
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                var_dump("fetching step information");
+                var_dump("Getting all information required to create an instance controller from the instance");
                 $this->employee_id = $row['employee_id'];
                 $this->instance_id = $row['instance_id'];
                 $this->workflow_id = $row['workflow_id'];
                 $this->instance_status = $row['instance_status'];
 
-                var_dump("getting the step handler id");
+                var_dump("Check for handler id to handle the step");
                 // get id handler id who is responsible for the handling the step of the instance
                 $handler_id = $this->step_obj->get_step_handler_id($this->employee_id, $this->workflow_id, $this->instance_status);
 
-                var_dump("handler id is: ", $handler_id);
+                var_dump("Responsible handler id found : ", $handler_id);
 
                 // check for either group or a single person 
                 $is_group = $this->step_obj->is_group();
 
-                var_dump("is this a group ", $is_group);
+                var_dump("The responsible handler id is a group:  ", $is_group);
 
-                // set the values
                 InstanceController::set_values($this->instance_id, $handler_id, $this->trace_order, $is_group);
-
-                // create the new instance controller record
                 if (InstanceController::create()) {
-                    var_dump("all done");
+                    var_dump("All step completed");
                     return true;
                 } else
                     return false;
@@ -271,7 +257,7 @@ class WorkflowInstance extends InstanceController
     //     }
     // }
 
-    public function show()
+    public function show_instance_details()
     {
         $output = "\nInstance name: " . $this->instance_name . "\nDescription: " . $this->instance_description . "\nWorkflow: " . $this->workflow_name . "\nStatus: " . $this->instance_status . "";
         echo $output;
@@ -283,7 +269,7 @@ class WorkflowInstance extends InstanceController
     public function load_instance($id)
     {
         try {
-            var_dump("loading the instance");
+            var_dump("Load the information regarding the instance");
             $this->instance_id = $id;
             InstanceController::set_instance_id($id);
             $query = "
@@ -301,8 +287,8 @@ class WorkflowInstance extends InstanceController
                         $this->instance_status = $row['instance_status'];
                         $this->trace_order = $row['instance_status'] + 1;
                         $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
-                        var_dump("Trace order : ", $this->trace_order);
-                        var_dump("loading the instance complete");
+                        var_dump("Trace order is: ", $this->trace_order);
+                        var_dump("Loading the instance is completed");
                     }
                 } else {
                     return false;
@@ -344,9 +330,9 @@ class WorkflowInstance extends InstanceController
      * Display the current status of the instance 
      * Here using the step_obj calling the method of step to display the current status of the instance
      */
-    public function display_status()
+    public function show_status()
     {
-        $this->step_obj->display_current_step();
+        $this->step_obj->show_current_step();
     }
 
 
@@ -356,14 +342,14 @@ class WorkflowInstance extends InstanceController
     private function go_next_step()
     {
         try {
-            var_dump("going to the next step");
+            var_dump("Looking for the next step available");
             $updatedAt = date('Y-m-d H:i:s');
             $next_step = $this->instance_status + 1;
             var_dump("Next step count ", $next_step);
             $total_steps = $this->workflow_obj->step_count($this->workflow_id);
             var_dump("Total step available ", $total_steps);
             if ($next_step <= $total_steps) {
-                var_dump("checking condition");
+                var_dump("Can go to next step");
                 $query = "
                 UPDATE " . $this->instance_table . " SET instance_status = :status, updated_at = :updated_at WHERE instance_id = :instance_id
                 ";
@@ -372,15 +358,10 @@ class WorkflowInstance extends InstanceController
                 $stmt->bindParam("updated_at", $updatedAt);
                 $stmt->bindParam("status", $next_step);
                 if ($stmt->execute()) {
-                    var_dump("jump to next step");
+                    var_dump("Move to the next step succesfully");
                     return true;
-                    // if ($next_step > $total_steps) {
-                    //     return false;
-                    // } else {
-                    //     return true;
-                    // }
                 } else {
-                    var_dump("not going to next step");
+                    var_dump("Final step found");
                     return false;
                 }
             }
@@ -392,8 +373,9 @@ class WorkflowInstance extends InstanceController
     private function go_previous_step()
     {
         try {
+            var_dump("Looking for the previous step");
             if ($this->instance_status > 1) {
-                $updatedAt = date('Y-m-d H:i:s'); // Returns the current date and time in the format 'YYYY-MM-DD HH:MM:SS'
+                $updatedAt = date('Y-m-d H:i:s'); 
                 $next_step = $this->instance_status - 1;
                 $query = "
                     UPDATE " . $this->instance_table . " SET instance_status = :status, updated_at = :updated_at WHERE instance_id = :instance_id
@@ -468,24 +450,24 @@ class WorkflowInstance extends InstanceController
 
     public function set_status($status)
     {
-        $this->status_code = $this->get_status_name($status);
+        $this->status_code = $this->get_status_code($status);
         var_dump("this is the status code: ", $this->status_code);
         InstanceController::set_status($this->status_code);
     }
-    
+
     /**
      * Update the intance by new status code alone with the ack from the handler
      */
     public function update()
     {
         try {
-            var_dump("is accept check before update ", InstanceController::is_accepted());
+            var_dump("Check for is it already accepted ", InstanceController::is_accepted());
             if (InstanceController::is_accepted())
                 return false;
             else
                 if (InstanceController::update()) {
-                    $this->update_instance();
-                }
+                $this->update_instance();
+            }
         } catch (PDOException $e) {
             echo json_encode($e);
             return false;
@@ -495,18 +477,25 @@ class WorkflowInstance extends InstanceController
     private function update_instance()
     {
         try {
-            var_dump("Current status code: ", $this->status_code);
+            var_dump("Check for status code: ", $this->status_code);
             if ($this->status_code == 1) {
-                if ($this->go_next_step()) {
+                if ($this->go_next_step())
                     $this->handle_instance($this->instance_id);
-                } else {
-                    var_dump("not going for next step");
-                    return false;
-                }
             }
 
+            if ($this->status_code == -1) 
+                var_dump("Rejected and stay in the same step");
+
             if ($this->status_code == -2) {
-                $this->go_previous_step();
+                if($this->go_previous_step()) 
+                    if($this->handle_instance($this->instance_id))
+                        return true;
+                    else
+                        return false;  
+            }
+
+            if ($this->status_code == 2) {
+                $this->go_particular_step(1);
             }
         } catch (PDOException $e) {
             echo json_encode($e);
@@ -517,7 +506,7 @@ class WorkflowInstance extends InstanceController
     /**
      * Getting the status code name by providing the status number
      */
-    private function get_status_name($status)
+    private function get_status_code($status)
     {
         try {
             $query = "
@@ -536,7 +525,39 @@ class WorkflowInstance extends InstanceController
         }
     }
 
-    
+    /**
+     * Accept the step
+     */
+    public function accept()
+    {
+        $this->status_code = 1;
+        InstanceController::set_status($this->status_code);
+    }
 
-    
+    /**
+     * Reject the step
+     */
+    public function reject()
+    {
+        $this->status_code = -1;
+        InstanceController::set_status($this->status_code);
+    }
+
+    /**
+     * Reject and rollback to the previous step
+     */
+    public function rollback()
+    {
+        $this->status_code = -2;
+        InstanceController::set_status($this->status_code);
+    }
+
+    /**
+     * goto a particular step
+     */
+    public function goto($step_number)
+    {
+        $this->status_code = $step_number;
+        InstanceController::set_status($this->status_code);
+    }
 }

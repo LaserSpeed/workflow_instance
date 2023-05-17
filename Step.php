@@ -518,7 +518,7 @@ class Step
     /**
      * Function to display the related data to a step
      *  */
-    public function display_current_step()
+    public function show_current_step()
     {
         try {
             $output = "\nStep Name: " . $this->name . "\nStep Order: " . $this->order . "\nStep type: " . $this->type . "\nStep handledby: " . $this->handledby . "";
