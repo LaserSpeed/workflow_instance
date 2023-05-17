@@ -620,7 +620,6 @@ class Step
     public function is_group()
     {
         $status =  $this->is_group;
-        // var_dump($status);
         $this->is_group = false;
         return $status;
     }
