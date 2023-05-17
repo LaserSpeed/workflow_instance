@@ -16,17 +16,17 @@
     // $obj->show_instance_details();
     
     // display the instance to a particular person 
-    // $obj->set_employee_id(500123);
-    // $obj->show_instance_by_person();
+    // $obj->set_employee_id(12);
+    // $obj->show_single_instance();
 
-    // $obj->set_group_id(123111);
-    // $obj->show_instance_by_group();
+    // $obj->set_group_id(123123);
+    // $obj->show_group_instance();
 
     /**
      * Function to load and display the current status of the instance
      * 
      */
-    // $obj->load_instance(83);
+    // $obj->load_instance(88);
     // $obj->set_current_status();
     // $obj->show_status();
 
@@ -39,9 +39,9 @@
     $obj->set_employee_id(123321);
     // // // $obj->set_status("reject");
     // $obj->accept();     // Accept the step 
-    // $obj->reject();     // Reject the step 
+    $obj->reject();     // Reject the step 
     // $obj->rollback();   // reject and go to previous step 
-    $obj->goto(1);     // go to a particular id
+    // $obj->goto(3);     // go to a particular id
     // $obj->set_remarks("Accept and forward");
     $obj->set_remarks("Reject due to worng information");
     $obj->update();

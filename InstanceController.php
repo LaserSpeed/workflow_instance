@@ -18,15 +18,13 @@ class InstanceController
     private $status;
     private $step;
     private $trace_order;
-    private $created_at;
-    private $updated_at;
 
-    public function set_instance_id($id)
+    protected function set_instance_id($id)
     {
         $this->instance_id = $id;
     }
 
-    public function set_group_id($id)
+    protected function set_group_id($id)
     {
         $this->group_id = $id;
     }
@@ -46,12 +44,12 @@ class InstanceController
         $this->remarks = $remarks;
     }
 
-    public function set_handleby_id($id)
+    protected function set_handleby_id($id)
     {
         $this->step_handleby_id = $id;
     }
 
-    public function __construct()
+    protected function __construct()
     {
         $this->conn = connect_db();
 
@@ -72,12 +70,6 @@ class InstanceController
         }
         $this->trace_order = $trace_order;
         $this->status = $status;
-
-        // var_dump("after setting the values");
-        // var_dump($this->instance_id = $instance_id);
-        // var_dump($this->step_handleby_id);
-        // var_dump($this->group_id);
-        // var_dump($this->status = $status);
     }
 
 
@@ -124,8 +116,11 @@ class InstanceController
 
     /**
      * Visible the instance to the correct person
+     * 
+     * Visible either to a single person or multiple number of person
+     * having same group
      */
-    protected function load_instance_by_person($employee_id)
+    protected function load_single_instance($employee_id)
     {
         try {
             $query = "
@@ -150,7 +145,7 @@ class InstanceController
     /**
      * Visible the instance to the correct group
      */
-    protected function load_instance_by_group($group_id)
+    protected function load_group_instance($group_id)
     {
         try {
             $query = "
@@ -203,7 +198,7 @@ class InstanceController
     /**
      * Updating the instance status accepted or rejected by a person or by a group
      */
-    public function update()
+    protected function update()
     {
         try {
             var_dump("Ready to update the instance handler");
@@ -215,9 +210,7 @@ class InstanceController
                 $query = "
                     UPDATE " . $this->trace_table . " SET `status`= :status, `remarks`= :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby );
                 ";
-                // $query = "
-                //     UPDATE " . $this->trace_table . " SET status = :status, remarks = :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby
-                // ";
+                
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
             } else {
@@ -225,9 +218,7 @@ class InstanceController
                 $query = "
                     UPDATE " . $this->trace_table_group . " SET `status`= :status, `remarks`= :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id );
                 ";
-                // $query = "
-                //     UPDATE " . $this->trace_table_group . " SET status = :status, remarks = :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id
-                // ";
+                
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
                 $stmt->bindParam("handled_by", $this->step_handleby_id);
@@ -241,14 +232,11 @@ class InstanceController
             if ($stmt->execute()) {
 
                 var_dump("Updated number of row: ", $stmt->rowCount());
-                if($stmt->rowCount() == 1) {
+                if ($stmt->rowCount() == 1) {
                     var_dump("Updated the instance controller");
                     return true;
-                }
-
-                else 
+                } else
                     return false;
-
             } else
                 return false;
         } catch (PDOException $e) {
@@ -261,7 +249,7 @@ class InstanceController
      * This function will call to check whether a step is already accepted or not
      * If accepted already it can not revert but if not then it can be modify  
      */
-    public function can_update()
+    protected function can_update()
     {
         try {
             var_dump("is group in is accepted ", $this->is_group);
@@ -284,7 +272,7 @@ class InstanceController
             $stmt->execute();
             if ($stmt->rowCount() == 1) {
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if (($row['status'] == 0) OR $row['status'] == -1)
+                if (($row['status'] == 0) or $row['status'] == -1)
                     return true;
                 else
                     return false;
