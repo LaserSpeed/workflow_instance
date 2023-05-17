@@ -80,19 +80,19 @@ class InstanceController
     protected function create()
     {
         try {
-            var_dump("Creating a new instance controller");
-            var_dump("Is a group id available here: ", $this->group_id);
-            var_dump("Is it a group : ", $this->is_group);
+            // var_dump("Creating a new instance controller");
+            // var_dump("Is a group id available here: ", $this->group_id);
+            // var_dump("Is it a group : ", $this->is_group);
 
             if ($this->is_group) {
-                var_dump("Group id found and creating in the group table");
+                // var_dump("Group id found and creating in the group table");
                 $query = "
                 INSERT INTO " . $this->trace_table_group . " SET instance_id = :instance_id, group_id = :group_id, trace_order = :trace_order
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam('group_id', $this->group_id);
             } else {
-                var_dump("Group id not found and creating in the person table");
+                // var_dump("Group id not found and creating in the person table");
                 $query = "
                     INSERT INTO " . $this->trace_table . " SET instance_id = :instance_id, step_handleby = :step_handleby, trace_order = :trace_order
                 ";
@@ -103,7 +103,7 @@ class InstanceController
             $stmt->bindParam('instance_id', $this->instance_id);
             $stmt->bindParam('trace_order', $this->trace_order);
             if ($stmt->execute()) {
-                var_dump("Creating a controller is completed");
+                // var_dump("Creating a controller is completed");
                 return true;
             } else
                 return false;
@@ -201,12 +201,12 @@ class InstanceController
     protected function update()
     {
         try {
-            var_dump("Ready to update the instance handler");
+            // var_dump("Ready to update the instance handler");
             $updatedAt = date('Y-m-d H:i:s');
 
-            var_dump("Is group id found: ", $this->group_id);
+            // var_dump("Is group id found: ", $this->group_id);
             if (is_null($this->group_id)) {
-                var_dump("Group id not found");
+                // var_dump("Group id not found");
                 $query = "
                     UPDATE " . $this->trace_table . " SET `status`= :status, `remarks`= :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby );
                 ";
@@ -214,7 +214,7 @@ class InstanceController
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
             } else {
-                var_dump("Group id found");
+                // var_dump("Group id found");
                 $query = "
                     UPDATE " . $this->trace_table_group . " SET `status`= :status, `remarks`= :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id );
                 ";
@@ -231,9 +231,9 @@ class InstanceController
 
             if ($stmt->execute()) {
 
-                var_dump("Updated number of row: ", $stmt->rowCount());
+                // var_dump("Updated number of row: ", $stmt->rowCount());
                 if ($stmt->rowCount() == 1) {
-                    var_dump("Updated the instance controller");
+                    // var_dump("Updated the instance controller");
                     return true;
                 } else
                     return false;
@@ -252,16 +252,16 @@ class InstanceController
     protected function can_update()
     {
         try {
-            var_dump("is group in is accepted ", $this->is_group);
+            // var_dump("is group in is accepted ", $this->is_group);
             if (($this->is_group) or isset($this->group_id)) {
-                var_dump("Fetching from group table");
+                // var_dump("Fetching from group table");
                 $query = "
                 SELECT status from " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id )
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
             } else {
-                var_dump("Fetching from person table");
+                // var_dump("Fetching from person table");
                 $query = "
                 SELECT status from " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby )
                 ";

@@ -34,15 +34,17 @@
     /**
      * Update the status of the instance
     */
-    $obj->load_instance(88);
+    $obj->load_instance(89);
+
     // $obj->set_group_id(123123);
     $obj->set_employee_id(123321);
-    // // // $obj->set_status("reject");
-    // $obj->accept();     // Accept the step 
-    $obj->reject();     // Reject the step 
+
+    $obj->accept();     // Accept the step 
+    // $obj->reject();     // Reject the step 
     // $obj->rollback();   // reject and go to previous step 
     // $obj->goto(3);     // go to a particular id
-    // $obj->set_remarks("Accept and forward");
-    $obj->set_remarks("Reject due to worng information");
+
+    $obj->set_remarks("Remarks");
+    
     $obj->update();
 ?>
