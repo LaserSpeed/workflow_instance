@@ -14,10 +14,14 @@ class InstanceController
     private $step_handleby_id;
     private $group_id = null;
     private $is_group = false;
+    private $response_id;
     private $remarks;
     private $status;
     private $step;
     private $trace_order;
+    private $status_desc;
+    private $created_at;
+    private $updated_at;
 
     protected function set_instance_id($id)
     {
@@ -210,7 +214,7 @@ class InstanceController
                 $query = "
                     UPDATE " . $this->trace_table . " SET `status`= :status, `remarks`= :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby );
                 ";
-                
+
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("step_handleby", $this->step_handleby_id);
             } else {
@@ -218,7 +222,7 @@ class InstanceController
                 $query = "
                     UPDATE " . $this->trace_table_group . " SET `status`= :status, `remarks`= :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id );
                 ";
-                
+
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
                 $stmt->bindParam("handled_by", $this->step_handleby_id);
@@ -283,5 +287,64 @@ class InstanceController
             echo json_encode($e);
             return false;
         }
+    }
+
+    protected function logs()
+    {
+        try {
+            $query = "
+            SELECT trace_id, instance_id, step_handleby, status, remarks, created_at, updated_at FROM " . $this->trace_table . " WHERE instance_id = :instance_id UNION ALL SELECT trace_id, instance_id, handled_by AS step_handleby, status, remarks, created_at, updated_at FROM " . $this->trace_table_group . " WHERE instance_id = :instance_id ORDER BY created_at ASC;
+            ";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam("instance_id", $this->instance_id);
+            if ($stmt->execute()) {
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $this->response_id = $row['step_handleby'];
+                    $this->status = $row['status'];
+                    $this->remarks = $row['remarks'];
+                    $this->created_at = $row['created_at'];
+                    $this->updated_at = $row['updated_at'];
+
+                    $this->get_status_details();
+                    $this->show_logs();
+                }
+            }
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
+    }
+
+    private function get_status_details()
+    {
+        try {
+            $query = "
+            SELECT `status_description` FROM `status_code` WHERE `status_code` = :status_code;
+            ";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam("status_code", $this->status);
+            $stmt->execute();
+            if ($stmt->rowCount() == 1) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $this->status_desc = $row['status_description'];
+            }
+        } catch (PDOException $e) {
+            echo json_encode($e);
+            return false;
+        }
+    }
+
+    private function show_logs()
+    {
+        $output = "
+            \n
+            Handling by       : " . $this->response_id . "
+            Status            : " . $this->status_desc . "
+            Remarks           : " . $this->remarks . "
+            Received at       : " . $this->created_at . "
+            Handled at        : " . $this->updated_at . "
+        ";
+        echo $output;
     }
 }
