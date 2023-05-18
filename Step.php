@@ -479,6 +479,35 @@ class Step
         }
     }
 
+    protected function get_step_details_by_id($workflow_id, $step_order)
+    {
+        try {
+            $query = "
+                SELECT * FROM " . $this->step_table . " WHERE workflow_id = :workflow_id AND step_order = :step_order;
+            ";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam('workflow_id', $workflow_id);
+            $stmt->bindParam('step_order', $step_order);
+            $stmt->execute();
+            if ($stmt->rowCount() > 0) {
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $this->id = $row['step_id'];
+                    $this->name = $row['step_name'];
+                    $this->description = $row['step_description'];
+                    $this->order = $row['step_order'];
+                    $this->type = $row['step_type'];
+                    $this->handledby = $row['step_handleby'];
+                }
+                $this->display_step_details();
+                return true;
+            } else
+                return false;
+        } catch (PDOException $e) {
+            echo json_encode($e);
+        }
+    }
+
     /**
      * Function to display the related data to a step
      *  */

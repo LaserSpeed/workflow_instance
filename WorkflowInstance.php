@@ -591,4 +591,34 @@ class WorkflowInstance extends InstanceController
         InstanceController::set_step($step_number);
         InstanceController::set_status($this->status_code);
     }
+
+
+    /**
+     * Get the current step
+     */
+    public function current_step() {
+        $this->workflow_obj->get_step_details_by_id($this->workflow_id, $this->instance_status);
+    }
+
+    /**
+     * Get the current step
+     */
+    public function previous_step() {
+        $previous_step = $this->instance_status - 1;
+        $this->workflow_obj->get_step_details_by_id($this->workflow_id, $previous_step);
+    }
+
+    /**
+     * Get the current step
+     */
+    public function next_step() {
+        $next_step = $this->instance_status + 1;
+        $this->workflow_obj->get_step_details_by_id($this->workflow_id, $next_step);
+    }
+    /**
+     * Function to get Status of a instance
+     */
+    public function get_status() {
+
+    }
 }

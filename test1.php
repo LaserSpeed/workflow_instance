@@ -26,38 +26,41 @@
      * Function to load and display the current status of the instance
      * 
      */
-    // $obj->load_instance(88);
+    // $obj->load_instance(89);
     // $obj->set_current_status();
     // $obj->show_status();
 
     /**
      * Show details related to the instance
      */
-    $obj->load_instance(89);
-    $obj->show_instance();
+    // $obj->load_instance(89);
+    // $obj->show_instance();
 
     /**
      * Show details about workflow and step related to an instance
      */
-    $obj->load_instance(89);
-    $obj->show_workflow();
+    // $obj->load_instance(89);
+    // $obj->show_workflow();
 
 
     /**
      * Previous step
      */
-    // get the current status of the instance
-    // pass it to the step class
-    // get the step details
+    $obj->load_instance(89);
+    $obj->previous_step();
 
      /**
      * Current step
      */
+    $obj->load_instance(89);
+    $obj->current_step();
+    // $obj->get_status();
 
      /**
      * Next step
      */
-
+    $obj->load_instance(89);
+    $obj->next_step();
     
     /**
      * Update the status of the instance

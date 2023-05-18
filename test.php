@@ -39,8 +39,8 @@ $obj = new Workflow();
  * 
  * Get all the details about the workflow and the steps for that workflow
  */
-$obj->load('Intern logsheet');
-$obj->print();
+// $obj->load('Intern logsheet');
+// $obj->print();
 
 
 /**
@@ -96,14 +96,15 @@ $obj->print();
  * 
  * Get the all details related to a steps
  */
-// $obj->get_step_details('workflow1', 'step2');
+// $obj->get_step_details('Intern logsheet', 'Finance');
+$obj->get_step_details_by_id('103', '4');
 
 
-$obj->load_workflow('Intern logsheet');
+// $obj->load_workflow('Intern logsheet');
 
-$step1 = new Step();
-$step1->set_values('Admin', 'Final approval by Admin', 'custom', '123321');
-$obj->add_step_in_position(4, $step1);
+// $step1 = new Step();
+// $step1->set_values('Admin', 'Final approval by Admin', 'custom', '123321');
+// $obj->add_step_in_position(4, $step1);
 
 // $step2 = new Step();
 // $step2->set_values('step2', 'description2', 'custom', 'HRD0023');

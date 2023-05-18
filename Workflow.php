@@ -380,6 +380,14 @@ class Workflow extends Step
             return false;
     }
 
+    public function get_step_details_by_id($workflow_id, $step_order)
+    {
+        if (Step::get_step_details_by_id($workflow_id, $step_order))
+            return true;
+        else
+            return false;
+    }
+
     /**
      * Workflow id may pass to step class due to load step or add step
      * THis function will take the responsibility
