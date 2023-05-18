@@ -291,6 +291,7 @@ class WorkflowInstance extends InstanceController
                         $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
                         // var_dump("Trace order is: ", $this->trace_order);
                         // var_dump("Loading the instance is completed");
+
                     }
                 } else {
                     return false;
@@ -329,36 +330,27 @@ class WorkflowInstance extends InstanceController
     /**
      * Set the current status of the intance 
      */
-    public function set_current_status()
-    {
-        try {
-            $query = "
-            SELECT w.workflow_name, s.* FROM " . $this->workflow_table . " w INNER JOIN " . $this->step_table . " s ON w.workflow_id = s.workflow_id WHERE w.workflow_id = :workflow_id AND step_order = :step_order;
-            ";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam("workflow_id", $this->workflow_id);
-            $stmt->bindParam("step_order", $this->instance_status);
-            if ($stmt->execute()) {
-                if ($stmt->rowCount() == 1) {
-                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                        $this->step_obj->set_step_values('null', $row['step_name'], $row['step_description'], $this->instance_status, $row['step_type'], $row['step_handleby']);
-                    }
-                }
-            }
-        } catch (PDOException $e) {
-            echo json_encode($e);
-        }
-    }
+    // public function set_current_status()
+    // {
+    //     try {
+    //         $query = "
+    //         SELECT w.workflow_name, s.* FROM " . $this->workflow_table . " w INNER JOIN " . $this->step_table . " s ON w.workflow_id = s.workflow_id WHERE w.workflow_id = :workflow_id AND step_order = :step_order;
+    //         ";
+    //         $stmt = $this->conn->prepare($query);
+    //         $stmt->bindParam("workflow_id", $this->workflow_id);
+    //         $stmt->bindParam("step_order", $this->instance_status);
+    //         if ($stmt->execute()) {
+    //             if ($stmt->rowCount() == 1) {
+    //                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    //                     $this->step_obj->set_step_values('null', $row['step_name'], $row['step_description'], $this->instance_status, $row['step_type'], $row['step_handleby']);
+    //                 }
+    //             }
+    //         }
+    //     } catch (PDOException $e) {
+    //         echo json_encode($e);
+    //     }
+    // }
 
-
-    /**
-     * Display the current status of the instance 
-     * Here using the step_obj calling the method of step to display the current status of the instance
-     */
-    public function show_status()
-    {
-        $this->step_obj->show_current_step();
-    }
 
 
     /**
@@ -618,7 +610,7 @@ class WorkflowInstance extends InstanceController
     /**
      * Function to get Status of a instance
      */
-    public function get_status() {
-
+    public function logs() {
+        InstanceController::logs();
     }
 }

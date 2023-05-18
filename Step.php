@@ -514,7 +514,7 @@ class Step
     private function display_step_details()
     {
         try {
-            $output = "\nStep ID: " . $this->id . "\nStep Name: " . $this->name . "\nStep Order: " . $this->order . "\nStep type: " . $this->type . "\nStep handledby: " . $this->handledby . "";
+            $output = "\n\nStep ID: " . $this->id . "\nStep Name: " . $this->name . "\nStep Order: " . $this->order . "\nStep type: " . $this->type . "\nStep handledby: " . $this->handledby . "";
             echo $output;
         } catch (PDOException $e) {
             echo json_encode($e);
@@ -543,19 +543,6 @@ class Step
         }
     }
 
-
-    /**
-     * Function to display the related data to a step
-     *  */
-    public function show_current_step()
-    {
-        try {
-            $output = "\nStep Name: " . $this->name . "\nStep Order: " . $this->order . "\nStep type: " . $this->type . "\nStep handledby: " . $this->handledby . "";
-            echo $output;
-        } catch (PDOException $e) {
-            echo json_encode($e);
-        }
-    }
 
     /**
      * Find the number of step available for a workflow
