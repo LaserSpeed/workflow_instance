@@ -1,14 +1,14 @@
 {
-    "server"            :   "localhost",
-    "password"          :   "",
-    "username"          :   "root",
-    "dbname"            :   "workflow_management",
-    "workflow_table"    :   "workflow",
-    "step_table"        :   "workflow_step",
-    "instance_table"    :   "workflow_instance",
-    "employee_table"    :   "employee_table",
-    "group_table"       :   "group_table",
-    "trace_instance"    :   "trace_instance",
-    "status_code"       :   "status_code",
-    "trace_instance_group"    :   "trace_instance_group"
+    "server"                :   "localhost",
+    "password"              :   "",
+    "username"              :   "root",
+    "dbname"                :   "workflow_management",
+    "workflow_table"        :   "workflow",
+    "step_table"            :   "workflow_step",
+    "instance_table"        :   "workflow_instance",
+    "employee_table"        :   "employee_table",
+    "group_table"           :   "group_table",
+    "handler_table_person"  :   "handling_request_person",
+    "handler_table_group"   :   "handling_request_group",
+    "status_code"           :   "status_code"
 }
