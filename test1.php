@@ -18,47 +18,47 @@ $obj = new WorkflowInstance();
 /**
  * Show details related to the instance
  */
-// $obj->load_instance(92);
+// $obj->load_instance(94);
 // $obj->show_instance();
 
 
 /**
  * Show details about workflow and step related to an instance
  */
-// $obj->load_instance(89);
+// $obj->load_instance(94);
 // $obj->show_workflow();
 
 
 /**
  * Current step
  */
-echo ("\n\nCurrent Step:");
-$obj->load_instance(92);
-$obj->current_step();
+// echo ("\n\nCurrent Step:");
+// $obj->load_instance(94);
+// $obj->current_step();
 
 
 /**
  * Previous step
  */
-echo ("\n\nPrevious Step:");
-$obj->load_instance(92);
-$obj->previous_step();
+// echo ("\n\nPrevious Step:");
+// $obj->load_instance(94);
+// $obj->previous_step();
 
 
 /**
  * Next step
  */
-echo ("\n\nNext Step:");
-$obj->load_instance(92);
-$obj->next_step();
+// echo ("\n\nNext Step:");
+// $obj->load_instance(94);
+// $obj->next_step();
 
 
 /**
  * Show all the logs
  */
-echo ("\n\nLogs\n");
-$obj->load_instance(92);
-$obj->logs();
+// echo ("\nLogs\n");
+// $obj->load_instance(94);
+// $obj->logs();
 
 
 
@@ -74,19 +74,19 @@ $obj->logs();
 // $obj->show_group_instance();
 
 
-/**
- * Update the status of the instance
- */
-$obj->load_instance(92);
+// /**
+//  * Update the status of the instance
+//  */
+// $obj->load_instance(94);
 
-// $obj->set_group_id(123123);
-$obj->set_employee_id(123321);
+// // $obj->set_group_id(123123);
+// $obj->set_employee_id(123321);
 
-$obj->accept();     // Accept the step 
-// $obj->reject();     // Reject the step 
-// $obj->rollback();   // reject and go to previous step 
+// // $obj->accept();     // Accept the step 
+// // $obj->reject();     // Reject the step 
+// // $obj->rollback();   // reject and go to previous step 
 // $obj->goto(3);     // go to a particular id
 
-$obj->set_remarks("Remarks");
+// $obj->set_remarks("Remarks");
 
-$obj->update();
+// $obj->update();
