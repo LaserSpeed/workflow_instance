@@ -22,7 +22,6 @@ class WorkflowInstance extends InstanceController
     private $instance_description;
     private $instance_status;
     private $status_code;
-    private $trace_order = 1;
     private $step_number;
     private $created_at;
     private $updated_at;
@@ -217,7 +216,7 @@ class WorkflowInstance extends InstanceController
 
                 // var_dump("The responsible handler id is a group:  ", $is_group);
 
-                InstanceController::set_values($this->instance_id, $handler_id, $this->trace_order, $is_group);
+                InstanceController::set_values($this->instance_id, $handler_id, $is_group);
                 if (InstanceController::create()) {
                     // var_dump("All step completed");
                     return true;
@@ -287,9 +286,7 @@ class WorkflowInstance extends InstanceController
                         $this->instance_status = $row['instance_status'];
                         $this->created_at = $row['created_at'];
                         $this->updated_at = $row['updated_at'];
-                        $this->trace_order = $row['instance_status'] + 1;
                         $this->workflow_name = $this->workflow_obj->get_name_by_id($row['workflow_id']);
-                        // var_dump("Trace order is: ", $this->trace_order);
                         // var_dump("Loading the instance is completed");
 
                     }

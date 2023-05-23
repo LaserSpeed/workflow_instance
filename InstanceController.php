@@ -18,7 +18,6 @@ class InstanceController
     private $remarks;
     private $status;
     private $step;
-    private $trace_order;
     private $status_desc;
     private $created_at;
     private $updated_at;
@@ -63,7 +62,7 @@ class InstanceController
         $this->status_code_table = $data['status_code'];
     }
 
-    protected function set_values($instance_id, $handleby_id, $trace_order, $group = false, $status = 0)
+    protected function set_values($instance_id, $handleby_id, $group = false, $status = 0)
     {
         $this->instance_id = $instance_id;
         if ($group == false) {
@@ -72,7 +71,6 @@ class InstanceController
             $this->group_id = $handleby_id;
             $this->is_group = true;
         }
-        $this->trace_order = $trace_order;
         $this->status = $status;
     }
 
@@ -91,21 +89,20 @@ class InstanceController
             if ($this->is_group) {
                 // var_dump("Group id found and creating in the group table");
                 $query = "
-                INSERT INTO " . $this->handler_table_group . " SET instance_id = :instance_id, group_id = :group_id, trace_order = :trace_order
+                INSERT INTO " . $this->handler_table_group . " SET instance_id = :instance_id, group_id = :group_id
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam('group_id', $this->group_id);
             } else {
                 // var_dump("Group id not found and creating in the person table");
                 $query = "
-                    INSERT INTO " . $this->handler_table_person . " SET instance_id = :instance_id, step_handleby = :step_handleby, trace_order = :trace_order
+                    INSERT INTO " . $this->handler_table_person . " SET instance_id = :instance_id, step_handleby = :step_handleby
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam('step_handleby', $this->step_handleby_id);
             }
 
             $stmt->bindParam('instance_id', $this->instance_id);
-            $stmt->bindParam('trace_order', $this->trace_order);
             if ($stmt->execute()) {
                 // var_dump("Creating a controller is completed");
                 return true;
