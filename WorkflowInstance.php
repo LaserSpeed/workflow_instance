@@ -339,7 +339,7 @@ class WorkflowInstance extends InstanceController
     //         if ($stmt->execute()) {
     //             if ($stmt->rowCount() == 1) {
     //                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    //                     $this->step_obj->set_step_values('null', $row['step_name'], $row['step_description'], $this->instance_status, $row['step_type'], $row['step_handleby']);
+    //                     $this->step_obj->set_step_values('null', $row['step_name'], $row['step_description'], $this->instance_status, $row['step_type'], $row['request_handler']);
     //                 }
     //             }
     //         }

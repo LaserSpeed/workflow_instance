@@ -11,7 +11,7 @@ class InstanceController
     private $status_code_table;
 
     private $instance_id;
-    private $step_handleby_id;
+    private $request_handler;
     private $group_id = null;
     private $is_group = false;
     private $response_id;
@@ -49,7 +49,7 @@ class InstanceController
 
     protected function set_handleby_id($id)
     {
-        $this->step_handleby_id = $id;
+        $this->request_handler = $id;
     }
 
     protected function __construct()
@@ -66,7 +66,7 @@ class InstanceController
     {
         $this->instance_id = $instance_id;
         if ($group == false) {
-            $this->step_handleby_id = $handleby_id;
+            $this->request_handler = $handleby_id;
         } else {
             $this->group_id = $handleby_id;
             $this->is_group = true;
@@ -96,10 +96,10 @@ class InstanceController
             } else {
                 // var_dump("Group id not found and creating in the person table");
                 $query = "
-                    INSERT INTO " . $this->handler_table_person . " SET instance_id = :instance_id, step_handleby = :step_handleby
+                    INSERT INTO " . $this->handler_table_person . " SET instance_id = :instance_id, request_handler = :request_handler
                 ";
                 $stmt = $this->conn->prepare($query);
-                $stmt->bindParam('step_handleby', $this->step_handleby_id);
+                $stmt->bindParam('request_handler', $this->request_handler);
             }
 
             $stmt->bindParam('instance_id', $this->instance_id);
@@ -125,7 +125,7 @@ class InstanceController
     {
         try {
             $query = "
-            SELECT * FROM " . $this->handler_table_person . " WHERE step_handleby = :employee_id
+            SELECT * FROM " . $this->handler_table_person . " WHERE request_handler = :employee_id
             ";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam("employee_id", $employee_id);
@@ -209,20 +209,20 @@ class InstanceController
             if (is_null($this->group_id)) {
                 // var_dump("Group id not found");
                 $query = "
-                    UPDATE " . $this->handler_table_person . " SET `status`= :status, `remarks`= :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->handler_table_person . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby );
+                    UPDATE " . $this->handler_table_person . " SET `status`= :status, `remarks`= :remarks, updated_at = :updated_at WHERE instance_id = :instance_id AND request_handler = :request_handler AND request_id = (SELECT MAX(request_id) FROM " . $this->handler_table_person . " WHERE instance_id = :instance_id AND request_handler = :request_handler );
                 ";
 
                 $stmt = $this->conn->prepare($query);
-                $stmt->bindParam("step_handleby", $this->step_handleby_id);
+                $stmt->bindParam("request_handler", $this->request_handler);
             } else {
                 // var_dump("Group id found");
                 $query = "
-                    UPDATE " . $this->handler_table_group . " SET `status`= :status, `remarks`= :remarks, handled_by = :handled_by, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->handler_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id );
+                    UPDATE " . $this->handler_table_group . " SET `status`= :status, `remarks`= :remarks, request_handler = :request_handler, updated_at = :updated_at WHERE instance_id = :instance_id AND group_id = :group_id AND request_id = (SELECT MAX(request_id) FROM " . $this->handler_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id );
                 ";
 
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
-                $stmt->bindParam("handled_by", $this->step_handleby_id);
+                $stmt->bindParam("request_handler", $this->request_handler);
             }
 
             $stmt->bindParam("instance_id", $this->instance_id);
@@ -257,17 +257,17 @@ class InstanceController
             if (($this->is_group) or isset($this->group_id)) {
                 // var_dump("Fetching from group table");
                 $query = "
-                SELECT status from " . $this->handler_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id AND trace_id = (SELECT MAX(trace_id) FROM " . $this->handler_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id )
+                SELECT status from " . $this->handler_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id AND request_id = (SELECT MAX(request_id) FROM " . $this->handler_table_group . " WHERE instance_id = :instance_id AND group_id = :group_id )
                 ";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam("group_id", $this->group_id);
             } else {
                 // var_dump("Fetching from person table");
                 $query = "
-                SELECT status from " . $this->handler_table_person . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby AND trace_id = (SELECT MAX(trace_id) FROM " . $this->handler_table_person . " WHERE instance_id = :instance_id AND step_handleby = :step_handleby )
+                SELECT status from " . $this->handler_table_person . " WHERE instance_id = :instance_id AND request_handler = :request_handler AND request_id = (SELECT MAX(request_id) FROM " . $this->handler_table_person . " WHERE instance_id = :instance_id AND request_handler = :request_handler )
                 ";
                 $stmt = $this->conn->prepare($query);
-                $stmt->bindParam("step_handleby", $this->step_handleby_id);
+                $stmt->bindParam("request_handler", $this->request_handler);
             }
             $stmt->bindParam("instance_id", $this->instance_id);
             $stmt->execute();
@@ -290,13 +290,13 @@ class InstanceController
     {
         try {
             $query = "
-            SELECT trace_id, instance_id, step_handleby, status, remarks, created_at, updated_at FROM " . $this->handler_table_person . " WHERE instance_id = :instance_id UNION ALL SELECT trace_id, instance_id, handled_by AS step_handleby, status, remarks, created_at, updated_at FROM " . $this->handler_table_group . " WHERE instance_id = :instance_id ORDER BY created_at ASC;
+            SELECT request_id, instance_id, request_handler, status, remarks, created_at, updated_at FROM " . $this->handler_table_person . " WHERE instance_id = :instance_id UNION ALL SELECT request_id, instance_id, request_handler AS request_handler, status, remarks, created_at, updated_at FROM " . $this->handler_table_group . " WHERE instance_id = :instance_id ORDER BY created_at ASC;
             ";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam("instance_id", $this->instance_id);
             if ($stmt->execute()) {
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    $this->response_id = $row['step_handleby'];
+                    $this->response_id = $row['request_handler'];
                     $this->status = $row['status'];
                     $this->remarks = $row['remarks'];
                     $this->created_at = $row['created_at'];
