@@ -47,13 +47,13 @@ $obj = new WorkflowInstance();
 //  */
 $obj->load_instance(95);
 
-// $obj->set_group_id(123123);
+$obj->set_group_id(123123);
 $obj->set_employee_id(123321);
 
 // $obj->accept();     // Accept the step 
 $obj->reject();     // Reject the step 
 // $obj->rollback();   // reject and go to previous step 
-// $obj->goto(3);     // go to a particular id
+// $obj->goto(1);     // go to a particular id
 
 $obj->set_remarks("Remarks");
 
